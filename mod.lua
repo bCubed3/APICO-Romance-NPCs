@@ -2,16 +2,19 @@
 
 MOD_NAME = "romance"
 
-ROMANCEABLE_NPCS = {"npc1", "npc3"}
+ROMANCEABLE_NPCS = {"npc1", "npc2", "npc3"}
 NPC_INFO = {}
 NPC_INFO_PERSISTENT = {}
 FULL_DATA = {}
 OPEN_MENUS = {}
 ROMANCE_BUTTON_SPR = -1
 GIFT_SLOT_SPR = -1
+GIFT_BUTTON_SPR = -1
+GIFT_ERROR_SPR = -1
 BUTTON_WIDTH = 16
 BUTTON_HEIGHT = 16
 TIMER = 0
+LAST_DAY = 0
 
 function register()
     return {
@@ -31,8 +34,8 @@ end
 
 function ready()
     api_get_data()
-    api_log("skipper", api_all_menu_objects("npc1"))
-    create_romance_menus()
+    setup_dialogue_variables()
+    LAST_DAY = api_get_time()["day"]
 end
 
 function create(id, x, y, oid, inst_type)
@@ -41,13 +44,7 @@ function create(id, x, y, oid, inst_type)
             if oid == ROMANCEABLE_NPCS[i] then
                 local inst = api_get_inst(id)
                 if inst ~= nil then
-                    if NPC_INFO[ROMANCEABLE_NPCS[i]] == nil then
-                        NPC_INFO[ROMANCEABLE_NPCS[i]] = {}
-                    end
-                    NPC_INFO[ROMANCEABLE_NPCS[i]]["menu_id"] = inst["menu_id"]
-                    if NPC_INFO_PERSISTENT[ROMANCEABLE_NPCS[i]] == nil then
-                        NPC_INFO_PERSISTENT[ROMANCEABLE_NPCS[i]] = get_npc_base_stats()
-                    end
+                    create_npc_info(ROMANCEABLE_NPCS[i])
                 end
             end
         end
@@ -84,6 +81,13 @@ end
 
 function clock()
     TIMER = TIMER + 1
+    local day = api_get_time()["day"]
+    --api_log("day", day)
+    if day > LAST_DAY then
+        LAST_DAY = day
+        api_log("new_day", "new_day")
+        renew_gifts()
+    end
 end
 
 function click(button, click_type)
@@ -126,6 +130,8 @@ end
 function define_sprites()
     ROMANCE_BUTTON_SPR = api_define_sprite("romance_button", "sprites/romance_button.png", 4)
     GIFT_SLOT_SPR = api_define_sprite("gift_slot", "sprites/npc_gift_slot.png", 1)
+    GIFT_BUTTON_SPR = api_define_sprite("gift_button", "sprites/npc_gift_button.png", 2)
+    GIFT_ERROR_SPR = api_define_sprite("gift_error", "sprites/npc_gift_error.png", 2)
     api_log("romance_npcs", "defined sprites !")
 end
 
@@ -139,7 +145,7 @@ function is_romanceable(oid)
 end
 
 function get_npc_base_stats()
-    return {hearts = 0, next_romance = 0}
+    return {hearts = 0, next_gift = 0}
 end
 
 function save()
@@ -159,7 +165,23 @@ function data(ev, data)
         if data[file] ~= nil then
             FULL_DATA = data
             NPC_INFO_PERSISTENT = data[file]["NPC_INFO"]
+        else
+            for i=1,#ROMANCEABLE_NPCS do
+                create_npc_info(ROMANCEABLE_NPCS[i])
+            end
         end
+        create_romance_menus()
+        load_gift_buttons()
+    end
+end
+
+function create_npc_info(npc_oid)
+    if NPC_INFO[npc_oid] == nil then
+        NPC_INFO[npc_oid] = {}
+    end
+    NPC_INFO[npc_oid]["menu_id"] = api_get_inst(api_all_menu_objects(npc_oid)[1])["menu_id"]
+    if NPC_INFO_PERSISTENT[npc_oid] == nil then
+        NPC_INFO_PERSISTENT[npc_oid] = get_npc_base_stats()
     end
 end
 

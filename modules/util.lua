@@ -1,5 +1,8 @@
+--util.lua
+
 LETTER_LENGTHS = {}
 LETTERS = " 0123456789abcedfghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ;'@#.,!/\\-+_=?[]"
+PLAYER_NAME = "Ulysses"
 
 function make_letter_lengths()
     for i=1,#LETTERS do
@@ -37,4 +40,13 @@ function get_string_px(str)
         out = out - 1
     end
     return out
+end
+
+function setup_dialogue_variables()
+    PLAYER_NAME = api_gp(api_get_player_instance(), "name")
+    api_log("player_name", PLAYER_NAME)
+end
+
+function set_variable_text(text)
+    return string.gsub(text, "@{name}", PLAYER_NAME)
 end
