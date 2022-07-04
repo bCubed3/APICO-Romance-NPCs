@@ -3,6 +3,13 @@
 MOD_NAME = "romance"
 
 ROMANCEABLE_NPCS = {"npc1", "npc2", "npc3"}
+PRONOUNS = {
+    pronouns1 = "(He/Him)",
+    pronouns2 = "(She/Her)",
+    pronouns3 = "(They/Them)",
+    pronouns4 = "(She/They)",
+    pronouns5 = "(He/They)"
+}
 NPC_INFO = {}
 NPC_INFO_PERSISTENT = {}
 FULL_DATA = {}
@@ -196,6 +203,7 @@ function create_romance_menus()
         end
         local menu_id = api_get_inst(api_all_menu_objects(npc_oid)[1])["menu_id"]
         local npc_def = api_get_definition(npc_oid) or {}
+        local pronouns = PRONOUNS[api_gp(menu_id, "my_pronouns")]
         api_log("npc", npc_def)
         NPC_INFO[npc_oid] = {
             menu_id = menu_id,
@@ -204,7 +212,7 @@ function create_romance_menus()
             menu_sprite = api_get_sprite(npc_oid .. "_menu"),
             name = npc_def["name"],
             next_dialogues = {"exhausted"},
-            pronouns = "(He/Him)",
+            pronouns = pronouns,
         }
         api_create_obj(flirt_oid, 0, 2)
     end
